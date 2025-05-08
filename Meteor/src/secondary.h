@@ -10,7 +10,7 @@
 /******************* Main train and test functions *******************/
 void parseInputs(int argc, char* argv[]);
 void train(NeuralNetwork* net);
-void test(bool PRELOADING, string network, NeuralNetwork* net);
+void test(bool PRELOADING, string network, NeuralNetwork* net, int size);
 // void generate_zeros(string name, size_t number, string network);
 void preload_network(bool PRELOADING, string network, NeuralNetwork* net);
 void loadData(string net, string dataset);
@@ -30,4 +30,9 @@ void aggregateCommunication();
 void print_usage(const char * bin);
 double diff(timespec start, timespec end);
 void deleteObjects();
+
+/***************** Client Communication and Helpers ******************/
+MEVectorType inputBatch(vector<ClientRequest> batch);
+void returnOutput(vector<ClientRequest> batch, NeuralNetwork* net);
+void listenForRequests(int port);
 #endif

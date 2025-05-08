@@ -3,7 +3,7 @@
 #include <chrono>
 #include <iostream>
 
-void RequestQueue::addRequest(const std::string& client_id, int request_id, const RSSVectorMyType& input_data, int socket_fd) {
+void RequestQueue::addRequest(const std::string& client_id, int request_id, const MEVectorType& input_data, int socket_fd) {
     ClientRequest req{client_id, request_id, input_data, socket_fd};
 
     std::lock_guard<std::mutex> lock(mutex_);

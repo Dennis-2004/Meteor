@@ -1,6 +1,12 @@
 
 #include "connect.h"
 #include "secondary.h"
+#include "AESObject.h"
+#include "FCLayer.h"
+#include "CNNLayer.h"
+#include "RequestQueue.h"
+#include "json.hpp"
+#include <thread>
 
 extern CommunicationObject commObject;
 extern int partyNum;
@@ -39,6 +45,8 @@ size_t TRAINING_DATA_SIZE;
 size_t TEST_DATA_SIZE;
 string SECURITY_TYPE;
 
+using json = nlohmann::json;
+
 extern void print_linear(myType var, string type);
 extern void funcReconstruct(const RSSVectorMyType &a, vector<myType> &b, size_t size, string str, bool print);
 
@@ -76,7 +84,7 @@ void train(NeuralNetwork *net)
 
 extern void print_vector(RSSVectorMyType &var, string type, string pre_text, int print_nos);
 extern string which_network(string network);
-void test(bool PRELOADING, string network, NeuralNetwork *net)
+void test(bool PRELOADING, string network, NeuralNetwork *net, int size)
 {
 	log_print("test");
 
@@ -86,26 +94,26 @@ void test(bool PRELOADING, string network, NeuralNetwork *net)
 
 	for (int i = 0; i < NUM_ITERATIONS; ++i)
 	{
-		if (!PRELOADING)
-			readMiniBatch(net, "TESTING");
+		// if (!PRELOADING)
+		// 	readMiniBatch(net, "TESTING");
 
 		net->forward();
 		// net->predict(maxIndex);
 		// net->getAccuracy(maxIndex, counter);
 	}
-	MEVectorType act = *(net->layers[NUM_LAYERS - 1]->getActivation());
-	RSSVectorMyType act2(act.size());
+	// MEVectorType act = *(net->layers[NUM_LAYERS - 1]->getActivation());
+	// RSSVectorMyType act2(act.size());
 
-	cout << "----------------------------------" << endl;
-	cout << "Final Output" << endl;
+	// cout << "----------------------------------" << endl;
+	// cout << "Final Output" << endl;
 
-	for (int i = 0; i < act.size(); ++i)
-	{
-		// cout << act[i].first << " " << act[i].second.first << " " << act[i].second.second << endl;
-		// act2[i] = make_pair(act[i].first, act[i].second.first);
-		cout << (static_cast<int64_t>(act[i].first)) / (float)(1 << FLOAT_PRECISION) << " ";
-	}
-	cout << endl;
+	// for (int i = 0; i < act.size(); ++i)
+	// {
+	// 	// cout << act[i].first << " " << act[i].second.first << " " << act[i].second.second << endl;
+	// 	// act2[i] = make_pair(act[i].first, act[i].second.first);
+	// 	cout << (static_cast<int64_t>(act[i].first)) / (float)(1 << FLOAT_PRECISION) << " ";
+	// }
+	// cout << endl;
 	// print_vector(act2, "FLOAT", "MPC Output over uint32_t:", 10);
 
 	// Write output to file
@@ -1558,6 +1566,124 @@ void deleteObjects()
 	delete[] communicationReceivers;
 	delete[] communicationSenders;
 	delete[] addrs;
+}
+
+/***************** Client Communication and Helpers ******************/
+MEVectorType convertInput(vector<vector<float>> input) {
+	MEVectorType inputData(INPUT_SIZE);
+	for (size_t i = 0; i < input[0].size(); ++i) {
+		inputData[i] = make_pair(0, make_pair(floatToMyType(input[0][i]), floatToMyType(input[1][i])));
+	}
+	return inputData;
+}
+
+
+MEVectorType inputBatch(vector<ClientRequest> batch) {
+	MEVectorType inputData(MINI_BATCH_SIZE * INPUT_SIZE);
+	size_t batchSize = batch.size();
+
+	for (size_t i = 0; i < MINI_BATCH_SIZE; ++i) {
+		if (i >= batchSize) {
+			for (size_t j = 0; j < INPUT_SIZE; ++j) {
+				inputData[i * INPUT_SIZE + j] = make_pair(0, make_pair(0, 0));
+			}
+		} else {
+			for (size_t j = 0; j < INPUT_SIZE; ++j) {
+				inputData[i * INPUT_SIZE + j] = batch[i].input_data[j];
+			}
+		}
+	}
+
+	return inputData;
+}
+
+void returnOutput(vector<ClientRequest> batch, NeuralNetwork *net) {
+	int i = 0;
+	MEVectorType totalOutput = *net->layers[NUM_LAYERS - 1]->getActivation();
+
+	for (const auto& request : batch) {
+        json response;
+        response["client_id"] = request.client_id;
+        response["request_id"] = request.request_id;
+
+		MEVectorType clientOutput(LAST_LAYER_SIZE);
+
+		for (int j = 0; j < LAST_LAYER_SIZE; ++j) {
+			clientOutput[j] = totalOutput[i * LAST_LAYER_SIZE + j];
+		}
+        response["output"] = clientOutput;
+
+        std::string message = response.dump();
+        ssize_t sent = send(request.socket_fd, message.c_str(), message.size(), 0);
+        if (sent < 0) {
+            std::cerr << "Failed to send response to client " << request.client_id << std::endl;
+        } else {
+            std::cout << "Sent response to " << request.client_id << " (ID " << request.request_id << ")\n";
+        }
+
+        close(request.socket_fd);
+		i++;
+    }
+}
+
+
+void listenForRequests(int port) {
+    int serverFd, newSocket;
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
+
+    if ((serverFd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    int opt = 1;
+    setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    if (bind(serverFd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(serverFd, 10) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    cout << "[P" << partyNum << "] Listening on port " << port << endl;
+
+    while (true) {
+        newSocket = accept(serverFd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+        if (newSocket < 0) {
+            perror("accept failed");
+            continue;
+        }
+
+        // Handle the connection in a new thread
+        std::thread([newSocket]() {
+            char buffer[16384] = {0};
+            int valread = read(newSocket, buffer, sizeof(buffer) - 1);
+            if (valread > 0) {
+                try {
+                    json j = json::parse(buffer);
+                    string clientId = j["client_id"];
+                    int requestId = j["request_id"];
+                    MEVectorType inputData = convertInput(j["inputs"]);
+
+                    requestQueue.addRequest(clientId, requestId, inputData, newSocket);
+                    cout << "✅ Received request from " << clientId << ", ID: " << requestId << endl;
+                } catch (const exception& e) {
+                    cerr << "❌ Failed to parse request: " << e.what() << endl;
+					close(newSocket);
+                }
+            }
+            // close(newSocket);
+        }).detach();
+    }
 }
 
 /************************ AlexNet on ImageNet ************************/

@@ -10,13 +10,13 @@
 struct ClientRequest {
     std::string client_id;
     int request_id;
-    RSSVectorMyType input_data;
+    MEVectorType input_data;
     int socket_fd;
 };
 
 class RequestQueue {
 public:
-    void addRequest(const std::string& client_id, int request_id, const RSSVectorMyType& input_data, int socket_fd);
+    void addRequest(const std::string& client_id, int request_id, const MEVectorType& input_data, int socket_fd);
     std::vector<ClientRequest> getNextBatch(size_t batchSize);
     size_t size();
 

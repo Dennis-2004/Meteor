@@ -71,7 +71,7 @@ if __name__ == "__main__":
     output = []
 
     for x in range(len(out1)):
-        output.append(mytype_signed_to_float(out1[x][0] + out1[x][1] + out2[x][1]))
+        output.append(mytype_signed_to_float(out1[x][0] + (out1[x][1][0] + out1[x][1][1] + out2[x][1][1])))
 
     print("Output:", output)
-    print("Image ID:", id, " Lavel:", train_labels[id])
+    print("Image ID:", id, " Label:", train_labels[id])
