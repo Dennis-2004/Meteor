@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "NeuralNetConfig.h"
 #include "NeuralNetwork.h"
+#include "RequestQueue.h"
 
 /******************* Main train and test functions *******************/
 void parseInputs(int argc, char* argv[]);

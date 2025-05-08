@@ -20,7 +20,7 @@
 /********************* AES and other globals *********************/
 #define LOG_DEBUG false
 #define LOG_DEBUG_NETWORK false
-#define FUNCTION_TIME true
+#define FUNCTION_TIME false
 #define RANDOM_COMPUTE 256	//Size of buffer for random elements
 #define STRING_BUFFER_SIZE 256
 #define PARALLEL false
@@ -33,7 +33,7 @@
 #define PARTY_A 0
 #define PARTY_B 1
 #define PARTY_C 2
-#define USING_EIGEN true
+#define USING_EIGEN false
 #define PRIME_NUMBER 67
 #define FLOAT_PRECISION 13
 #define PRECISE_DIVISION false

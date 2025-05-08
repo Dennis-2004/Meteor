@@ -8,28 +8,30 @@
 #include "NeuralNetwork.h"
 #include "unitTests.h"
 
-
 int partyNum;
-AESObject* aes_indep;
-AESObject* aes_next;
-AESObject* aes_prev;
+AESObject *aes_indep;
+AESObject *aes_next;
+AESObject *aes_prev;
 Precompute PrecomputeObject;
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-/****************************** PREPROCESSING ******************************/ 
+	/****************************** PREPROCESSING ******************************/
 	parseInputs(argc, argv);
-	NeuralNetConfig* config = new NeuralNetConfig(NUM_ITERATIONS);
+	NeuralNetConfig *config = new NeuralNetConfig(NUM_ITERATIONS);
 	string network, dataset, security;
-	bool PRELOADING = true;
+	bool PRELOADING = false;
 
-/****************************** SELECT NETWORK ******************************/ 
-	//Network {SecureML, Sarda, MiniONN, LeNet, AlexNet, and VGG16}
-	//Dataset {MNIST, CIFAR10, and ImageNet}
-	//Security {Semi-honest or Malicious}
+	/****************************** SELECT NETWORK ******************************/
+	// Network {SecureML, Sarda, MiniONN, LeNet, AlexNet, and VGG16}
+	// Dataset {MNIST, CIFAR10, and ImageNet}
+	// Security {Semi-honest or Malicious}
 	if (argc == 9)
-	{network = argv[6]; dataset = argv[7]; security = argv[8];}
+	{
+		network = argv[6];
+		dataset = argv[7];
+		security = argv[8];
+	}
 	else
 	{
 		network = "SecureML";
@@ -38,9 +40,9 @@ int main(int argc, char** argv)
 	}
 	selectNetwork(network, dataset, security, config);
 	config->checkNetwork();
-	NeuralNetwork* net = new NeuralNetwork(config);
+	NeuralNetwork *net = new NeuralNetwork(config);
 
-/****************************** AES SETUP and SYNC ******************************/ 
+	/****************************** AES SETUP and SYNC ******************************/
 	aes_indep = new AESObject(argv[3]);
 	aes_next = new AESObject(argv[4]);
 	aes_prev = new AESObject(argv[5]);
@@ -49,22 +51,23 @@ int main(int argc, char** argv)
 	synchronize(2000000);
 	cout << "connected success" << endl;
 
-/****************************** RUN NETWORK/UNIT TESTS ******************************/ 
-	//Run these if you want a preloaded network to be tested
-	//assert(NUM_ITERATION == 1 and "check if readMiniBatch is false in test(net)")
-	//First argument {SecureML, Sarda, MiniONN, or LeNet}
-	// network += " preloaded"; PRELOADING = true;
-	// preload_network(PRELOADING, network, net);
+	/****************************** RUN NETWORK/UNIT TESTS ******************************/
+	// Run these if you want a preloaded network to be tested
+	// assert(NUM_ITERATION == 1 and "check if readMiniBatch is false in test(net)")
+	// First argument {SecureML, Sarda, MiniONN, or LeNet}
+	network += " preloaded";
+	PRELOADING = true;
+	preload_network(PRELOADING, network, net);
 
 	start_m();
-	//start_communication();
-	//start_time();
-	
-	//Run unit tests in two modes: 
+	// start_communication();
+	// start_time();
+
+	// Run unit tests in two modes:
 	//	1. Debug {Mat-Mul, DotProd, PC, Wrap, ReLUPrime, ReLU, Division, BN, SSBits, SS, and Maxpool}
 	//	2. Test {Mat-Mul1, Mat-Mul2, Mat-Mul3 (and similarly) Conv*, ReLU*, ReLUPrime*, and Maxpool*} where * = {1,2,3}
-	//runTest("Debug", "Division", network);
-	runTest("Test", "MeteorRELU", network);
+	//  runTest("Debug", "Division", network);
+	//  runTest("Test", "MeteorRELU", network);
 
 	// Run forward/backward for single layers
 	//  1. what {F, D, U}
@@ -73,24 +76,25 @@ int main(int argc, char** argv)
 	// string what = "F";
 	// runOnly(net, l, what, network);
 
-	//Run training
-	//network += " train";
-	//train(net);
+	// Run training
+	// network += " train";
+	// train(net);
 
-	//Run inference (possibly with preloading a network);
-	//network += " test";
-	//test(PRELOADING, network, net);
+	// Run inference (possibly with preloading a network);
+	network += " test";
+	test(PRELOADING, network, net);
 
 	end_m(network);
-	cout << "----------------------------------------------" << endl;  	
-	cout << "Run details: " << NUM_OF_PARTIES << "PC (P" << partyNum 
-		 << "), " << NUM_ITERATIONS << " iterations, batch size " << MINI_BATCH_SIZE << endl 
+	cout << "----------------------------------------------" << endl;
+	cout << "Run details: " << NUM_OF_PARTIES << "PC (P" << partyNum
+		 << "), " << NUM_ITERATIONS << " iterations, batch size " << MINI_BATCH_SIZE << endl
 		 << "Running " << security << " " << network << " on " << dataset << " dataset" << endl;
-	cout << "----------------------------------------------" << endl << endl;  
+	cout << "----------------------------------------------" << endl
+		 << endl;
 
 	printNetwork(net);
 
-/****************************** CLEAN-UP ******************************/ 
+	/****************************** CLEAN-UP ******************************/
 	delete aes_indep;
 	delete aes_next;
 	delete aes_prev;
@@ -100,7 +104,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-
-
-

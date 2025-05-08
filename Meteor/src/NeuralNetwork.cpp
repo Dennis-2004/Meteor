@@ -15,29 +15,34 @@ extern size_t LAST_LAYER_SIZE;
 extern bool WITH_NORMALIZATION;
 extern bool LARGE_NETWORK;
 
-NeuralNetwork::NeuralNetwork(NeuralNetConfig* config)
-:inputData(INPUT_SIZE * MINI_BATCH_SIZE),
- outputData(LAST_LAYER_SIZE * MINI_BATCH_SIZE)
+NeuralNetwork::NeuralNetwork(NeuralNetConfig *config)
+	: inputData(INPUT_SIZE * MINI_BATCH_SIZE),
+	  outputData(LAST_LAYER_SIZE * MINI_BATCH_SIZE)
 {
 	for (size_t i = 0; i < NUM_LAYERS; ++i)
 	{
-		if (config->layerConf[i]->type.compare("FC") == 0) {
+		if (config->layerConf[i]->type.compare("FC") == 0)
+		{
 			FCConfig *cfg = static_cast<FCConfig *>(config->layerConf[i]);
 			layers.push_back(new FCLayer(cfg, i));
 		}
-		else if (config->layerConf[i]->type.compare("CNN") == 0) {
+		else if (config->layerConf[i]->type.compare("CNN") == 0)
+		{
 			CNNConfig *cfg = static_cast<CNNConfig *>(config->layerConf[i]);
 			layers.push_back(new CNNLayer(cfg, i));
 		}
-		else if (config->layerConf[i]->type.compare("Maxpool") == 0) {
+		else if (config->layerConf[i]->type.compare("Maxpool") == 0)
+		{
 			MaxpoolConfig *cfg = static_cast<MaxpoolConfig *>(config->layerConf[i]);
 			layers.push_back(new MaxpoolLayer(cfg, i));
 		}
-		else if (config->layerConf[i]->type.compare("ReLU") == 0) {
+		else if (config->layerConf[i]->type.compare("ReLU") == 0)
+		{
 			ReLUConfig *cfg = static_cast<ReLUConfig *>(config->layerConf[i]);
 			layers.push_back(new ReLULayer(cfg, i));
 		}
-		else if (config->layerConf[i]->type.compare("BN") == 0) {
+		else if (config->layerConf[i]->type.compare("BN") == 0)
+		{
 			BNConfig *cfg = static_cast<BNConfig *>(config->layerConf[i]);
 			layers.push_back(new BNLayer(cfg, i));
 		}
@@ -46,10 +51,9 @@ NeuralNetwork::NeuralNetwork(NeuralNetConfig* config)
 	}
 }
 
-
 NeuralNetwork::~NeuralNetwork()
 {
-	for (vector<Layer*>::iterator it = layers.begin() ; it != layers.end(); ++it)
+	for (vector<Layer *>::iterator it = layers.begin(); it != layers.end(); ++it)
 		delete (*it);
 
 	layers.clear();
@@ -65,16 +69,37 @@ void NeuralNetwork::forward()
 
 	// print_vector(inputData, "FLOAT", "inputData:", 784);
 	// print_vector(*((CNNLayer*)layers[0])->getWeights(), "FLOAT", "w0:", 20);
-	// print_vector((*layers[0]->getActivation()), "FLOAT", "a0:", 1000);
+	MEVectorType act = *layers[0]->getActivation();
+	// RSSVectorMyType act2(act.size());
+	// cout << "----------------------------------" << endl;
+	// cout << "First Layer Output" << endl;
 
+	// for (int i = 0; i < 100; ++i) {
+	// 	// cout << act[i].first - act[i].second.first << " ";
+	// 	// cout << act[i].first << " " << act[i].second.first << " " << act[i].second.second << " ";
+	// 	cout << (static_cast<int64_t>(act[i].first + act[i].second.first)) / (float)(1 << FLOAT_PRECISION) << " ";
+	// }
+
+	// cout << endl;
 
 	for (size_t i = 1; i < NUM_LAYERS; ++i)
 	{
-		layers[i]->forward(*(layers[i-1]->getActivation()));
+		layers[i]->forward(*(layers[i - 1]->getActivation()));
+
+		act = *layers[i]->getActivation();
+		// cout << "----------------------------------" << endl;
+		// cout << "Layer " << i << " Output" << endl;
+		// for (int j = 0; j < 100; ++j) {
+		// 	// cout << act[j].first << " " << act[j].second.first << " " << act[j].second.second << " ";
+		// 	cout << (static_cast<int64_t>(act[j].first + act[j].second.first)) / (float)(1 << FLOAT_PRECISION) << " ";
+		// }
+
+		// cout << endl;
+
 		if (LARGE_NETWORK)
 			cout << "Forward \t" << layers[i]->layerNum << " completed..." << endl;
 
-		// print_vector((*layers[i]->getActivation()), "FLOAT", "Activation Layer"+to_string(i), 
+		// print_vector((*layers[i]->getActivation()), "FLOAT", "Activation Layer"+to_string(i),
 		// 			(*layers[i]->getActivation()).size());
 
 		// print_vector((*layers[i]->getActivation()), "FLOAT", "Activation Layer "+to_string(i), 100);
@@ -95,9 +120,9 @@ void NeuralNetwork::computeDelta()
 
 	size_t rows = MINI_BATCH_SIZE;
 	size_t columns = LAST_LAYER_SIZE;
-	size_t size = rows*columns;
+	size_t size = rows * columns;
 	size_t index;
-	
+
 	if (WITH_NORMALIZATION)
 	{
 		/*
@@ -106,7 +131,7 @@ void NeuralNetwork::computeDelta()
 
 		for (size_t i = 0; i < rows; ++i)
 			for (size_t j = 0; j < columns; ++j)
-				rowSum[i*columns] = rowSum[i*columns] + 
+				rowSum[i*columns] = rowSum[i*columns] +
 									(*(layers[NUM_LAYERS-1]->getActivation()))[i * columns + j];
 
 		for (size_t i = 0; i < rows; ++i)
@@ -129,17 +154,17 @@ void NeuralNetwork::computeDelta()
 			for (size_t j = 0; j < columns; ++j)
 			{
 				index = i * columns + j;
-				(*(layers[NUM_LAYERS-1]->getDelta()))[index] = 
-				(*(layers[NUM_LAYERS-1]->getActivation()))[index] - outputData[index];
+				(*(layers[NUM_LAYERS - 1]->getDelta()))[index] =
+					(*(layers[NUM_LAYERS - 1]->getActivation()))[index] - outputData[index];
 			}
 	}
 
-	if (LARGE_NETWORK)		
+	if (LARGE_NETWORK)
 		cout << "Delta last layer completed." << endl;
 
-	for (size_t i = NUM_LAYERS-1; i > 0; --i)
+	for (size_t i = NUM_LAYERS - 1; i > 0; --i)
 	{
-		layers[i]->computeDelta(*(layers[i-1]->getDelta()));
+		layers[i]->computeDelta(*(layers[i - 1]->getDelta()));
 		if (LARGE_NETWORK)
 			cout << "Delta \t\t" << layers[i]->layerNum << " completed..." << endl;
 	}
@@ -149,16 +174,16 @@ void NeuralNetwork::updateEquations()
 {
 	log_print("NN.updateEquations");
 
-	for (size_t i = NUM_LAYERS-1; i > 0; --i)
+	for (size_t i = NUM_LAYERS - 1; i > 0; --i)
 	{
-		layers[i]->updateEquations(*(layers[i-1]->getActivation()));	
+		layers[i]->updateEquations(*(layers[i - 1]->getActivation()));
 		if (LARGE_NETWORK)
-			cout << "Update Eq. \t" << layers[i]->layerNum << " completed..." << endl;	
+			cout << "Update Eq. \t" << layers[i]->layerNum << " completed..." << endl;
 	}
 
 	layers[0]->updateEquations(inputData);
 	if (LARGE_NETWORK)
-		cout << "First layer update Eq. completed." << endl;		
+		cout << "First layer update Eq. completed." << endl;
 }
 
 void NeuralNetwork::predict(RSSVectorMyType &maxIndex)
@@ -168,9 +193,9 @@ void NeuralNetwork::predict(RSSVectorMyType &maxIndex)
 	size_t rows = MINI_BATCH_SIZE;
 	size_t columns = LAST_LAYER_SIZE;
 	RSSVectorMyType max(rows);
-	RSSVectorSmallType maxPrime(rows*columns);
+	RSSVectorSmallType maxPrime(rows * columns);
 
-	//funcMaxpool(*(layers[NUM_LAYERS-1]->getActivation()), max, rows, columns);
+	// funcMaxpool(*(layers[NUM_LAYERS-1]->getActivation()), max, rows, columns);
 }
 
 void NeuralNetwork::getAccuracy(const RSSVectorMyType &maxIndex, vector<size_t> &counter)
@@ -180,13 +205,13 @@ void NeuralNetwork::getAccuracy(const RSSVectorMyType &maxIndex, vector<size_t> 
 	size_t rows = MINI_BATCH_SIZE;
 	size_t columns = LAST_LAYER_SIZE;
 	RSSVectorMyType max(rows);
-	RSSVectorSmallType maxPrime(rows*columns);
+	RSSVectorSmallType maxPrime(rows * columns);
 
-	//Needed maxIndex here
-	//funcMaxpool(outputData, max, rows, columns);
+	// Needed maxIndex here
+	// funcMaxpool(outputData, max, rows, columns);
 
-	//Reconstruct things
-/******************************** TODO ****************************************/
+	// Reconstruct things
+	/******************************** TODO ****************************************/
 	RSSVectorMyType temp_max(rows), temp_groundTruth(rows);
 	// if (partyNum == PARTY_B)
 	// 	sendTwoVectors<RSSMyType>(max, groundTruth, PARTY_A, rows, rows);
@@ -195,20 +220,18 @@ void NeuralNetwork::getAccuracy(const RSSVectorMyType &maxIndex, vector<size_t> 
 	// {
 	// 	receiveTwoVectors<RSSMyType>(temp_max, temp_groundTruth, PARTY_B, rows, rows);
 	// 	addVectors<RSSMyType>(temp_max, max, temp_max, rows);
-//		dividePlain(temp_max, (1 << FLOAT_PRECISION));
-	// 	addVectors<RSSMyType>(temp_groundTruth, groundTruth, temp_groundTruth, rows);	
+	//		dividePlain(temp_max, (1 << FLOAT_PRECISION));
+	// 	addVectors<RSSMyType>(temp_groundTruth, groundTruth, temp_groundTruth, rows);
 	// }
-/******************************** TODO ****************************************/
+	/******************************** TODO ****************************************/
 
 	for (size_t i = 0; i < MINI_BATCH_SIZE; ++i)
 	{
 		counter[1]++;
 		if (temp_max[i] == temp_groundTruth[i])
 			counter[0]++;
-	}		
+	}
 
-	cout << "Rolling accuracy: " << counter[0] << " out of " 
-		 << counter[1] << " (" << (counter[0]*100/counter[1]) << " %)" << endl;
+	cout << "Rolling accuracy: " << counter[0] << " out of "
+		 << counter[1] << " (" << (counter[0] * 100 / counter[1]) << " %)" << endl;
 }
-
-
