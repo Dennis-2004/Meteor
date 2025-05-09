@@ -19,6 +19,7 @@ public:
     void addRequest(const std::string& client_id, int request_id, const MEVectorType& input_data, int socket_fd);
     std::vector<ClientRequest> getNextBatch(size_t batchSize);
     size_t size();
+    void requeueFront(const std::vector<ClientRequest>& requests);
 
 private:
     std::queue<ClientRequest> queue_;

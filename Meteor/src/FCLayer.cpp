@@ -55,7 +55,7 @@ void FCLayer::printLayer()
 void FCLayer::forward(const MEVectorType &inputActivation)
 {
 	log_print("FC.forward");
-	cout << "FC.forward" << endl;
+	// cout << "FC.forward" << endl;
 	size_t rows = conf.batchSize;
 	size_t columns = conf.outputDim;
 	size_t common_dim = conf.inputDim;

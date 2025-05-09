@@ -22,7 +22,7 @@ void ReLULayer::printLayer()
 void ReLULayer::forward(const MEVectorType &inputActivation)
 {
 	log_print("ReLU.forward");
-	cout << "ReLU.forward" << endl;
+	// cout << "ReLU.forward" << endl;
 
 	size_t rows = conf.batchSize;
 	size_t columns = conf.inputDim;

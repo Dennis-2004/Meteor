@@ -32,6 +32,7 @@ double diff(timespec start, timespec end);
 void deleteObjects();
 
 /***************** Client Communication and Helpers ******************/
+void syncBatch(vector<ClientRequest> &batch);
 MEVectorType inputBatch(vector<ClientRequest> batch);
 void returnOutput(vector<ClientRequest> batch, NeuralNetwork* net);
 void listenForRequests(int port);

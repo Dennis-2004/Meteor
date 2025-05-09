@@ -77,14 +77,25 @@ int main(int argc, char **argv)
 		size_t queue_size = requestQueue.size();
 		if (queue_size >= MINI_BATCH_SIZE || (num_sleep > 10 && queue_size > 0))
 		{
+			if (queue_size > MINI_BATCH_SIZE)
+			{
+				queue_size = MINI_BATCH_SIZE;
+			}
+
 			num_sleep = 0;
 			vector<ClientRequest> batch = requestQueue.getNextBatch(queue_size);
+			syncBatch(batch);
+			cout << "[P" << partyNum << "] Processing batch of size " << batch.size() << std::endl;
+			// for (int i = 0; i < batch.size(); ++i)
+			// {
+			// 	cout << "Request ID: " << batch[i].request_id << endl;
+			// }
 			net->inputData = inputBatch(batch);
-			;
 
 			std::cout << "[P" << partyNum << "] Running inference on batch...\n";
 			test(PRELOADING, network + " test", net, (int)queue_size);
 			returnOutput(batch, net);
+			cout << "[P" << partyNum << "] Finished processing batch.\n";
 		}
 		else
 		{

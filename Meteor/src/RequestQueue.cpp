@@ -32,3 +32,21 @@ size_t RequestQueue::size() {
     std::lock_guard<std::mutex> lock(mutex_);
     return queue_.size();
 }
+
+void RequestQueue::requeueFront(const std::vector<ClientRequest>& requests) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::queue<ClientRequest> new_queue;
+
+    // Add new requests to the front
+    for (const auto& req : requests) {
+        new_queue.push(req);
+    }
+
+    // Append existing queue
+    while (!queue_.empty()) {
+        new_queue.push(queue_.front());
+        queue_.pop();
+    }
+
+    queue_ = std::move(new_queue);
+}

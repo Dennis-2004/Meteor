@@ -6,7 +6,10 @@
 #include "CNNLayer.h"
 #include "RequestQueue.h"
 #include "json.hpp"
+#include "Functionalities.h"
 #include <thread>
+#include <set>
+#include <algorithm>
 
 extern CommunicationObject commObject;
 extern int partyNum;
@@ -150,7 +153,7 @@ extern size_t nextParty(size_t party);
 void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 {
 	log_print("preload_network");
-	assert((PRELOADING) and (NUM_ITERATIONS == 1) and (MINI_BATCH_SIZE == 1) && "Preloading conditions fail");
+	assert((PRELOADING) and (NUM_ITERATIONS == 1) and (MINI_BATCH_SIZE == 128) && "Preloading conditions fail");
 
 	float temp_next = 0, temp_prev = 0;
 	string default_path = "files/preload/" + which_network(network) + "/";
@@ -169,7 +172,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_input_1 >> temp_next;
 			f_input_2 >> temp_prev;
-			net->inputData[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			net->inputData[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_input_1.close();
 		f_input_2.close();
@@ -193,7 +196,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight1_1 >> temp_next;
 				f_weight1_2 >> temp_prev;
 				(*((FCLayer *)net->layers[0])->getWeights())[128 * row + column] =
-					std::make_pair(myType(0), std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(myType(0), make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight1_1.close();
@@ -216,7 +219,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight2_1 >> temp_next;
 				f_weight2_2 >> temp_prev;
 				(*((FCLayer *)net->layers[2])->getWeights())[128 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight2_1.close();
@@ -239,7 +242,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight3_1 >> temp_next;
 				f_weight3_2 >> temp_prev;
 				(*((FCLayer *)net->layers[4])->getWeights())[10 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight3_1.close();
@@ -259,7 +262,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias1_1 >> temp_next;
 			f_bias1_2 >> temp_prev;
-			(*((FCLayer *)net->layers[0])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[0])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias1_1.close();
 		f_bias1_2.close();
@@ -278,7 +281,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias2_1 >> temp_next;
 			f_bias2_2 >> temp_prev;
-			(*((FCLayer *)net->layers[2])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[2])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias2_1.close();
 		f_bias2_2.close();
@@ -297,7 +300,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias3_1 >> temp_next;
 			f_bias3_2 >> temp_prev;
-			(*((FCLayer *)net->layers[4])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[4])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias3_1.close();
 		f_bias3_2.close();
@@ -319,7 +322,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_input_1 >> temp_next;
 			f_input_2 >> temp_prev;
-			net->inputData[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			net->inputData[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_input_1.close();
 		f_input_2.close();
@@ -343,7 +346,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight1_1 >> temp_next;
 				f_weight1_2 >> temp_prev;
 				(*((CNNLayer *)net->layers[0])->getWeights())[4 * column + row] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight1_1.close();
@@ -366,7 +369,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight2_1 >> temp_next;
 				f_weight2_2 >> temp_prev;
 				(*((FCLayer *)net->layers[2])->getWeights())[100 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight2_1.close();
@@ -389,7 +392,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight3_1 >> temp_next;
 				f_weight3_2 >> temp_prev;
 				(*((FCLayer *)net->layers[4])->getWeights())[10 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight3_1.close();
@@ -409,7 +412,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias1_1 >> temp_next;
 			f_bias1_2 >> temp_prev;
-			(*((CNNLayer *)net->layers[0])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((CNNLayer *)net->layers[0])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias1_1.close();
 		f_bias1_2.close();
@@ -428,7 +431,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias2_1 >> temp_next;
 			f_bias2_2 >> temp_prev;
-			(*((FCLayer *)net->layers[2])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[2])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias2_1.close();
 		f_bias2_2.close();
@@ -447,7 +450,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias3_1 >> temp_next;
 			f_bias3_2 >> temp_prev;
-			(*((FCLayer *)net->layers[4])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[4])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias3_1.close();
 		f_bias3_2.close();
@@ -469,7 +472,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_input_1 >> temp_next;
 			f_input_2 >> temp_prev;
-			net->inputData[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			net->inputData[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_input_1.close();
 		f_input_2.close();
@@ -491,7 +494,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 			f_weight1_1 >> temp_next;
 			f_weight1_2 >> temp_prev;
 			(*((CNNLayer *)net->layers[0])->getWeights())[row] =
-				std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+				make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_weight1_1.close();
 		f_weight1_2.close();
@@ -511,7 +514,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 			f_weight2_1 >> temp_next;
 			f_weight2_2 >> temp_prev;
 			(*((CNNLayer *)net->layers[3])->getWeights())[row] =
-				std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+				make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_weight2_1.close();
 		f_weight2_2.close();
@@ -533,7 +536,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight3_1 >> temp_next;
 				f_weight3_2 >> temp_prev;
 				(*((FCLayer *)net->layers[6])->getWeights())[100 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight3_1.close();
@@ -556,7 +559,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight4_1 >> temp_next;
 				f_weight4_2 >> temp_prev;
 				(*((FCLayer *)net->layers[8])->getWeights())[10 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight4_1.close();
@@ -576,7 +579,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias1_1 >> temp_next;
 			f_bias1_2 >> temp_prev;
-			(*((CNNLayer *)net->layers[0])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((CNNLayer *)net->layers[0])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias1_1.close();
 		f_bias1_2.close();
@@ -595,7 +598,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias2_1 >> temp_next;
 			f_bias2_2 >> temp_prev;
-			(*((CNNLayer *)net->layers[3])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((CNNLayer *)net->layers[3])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias2_1.close();
 		f_bias2_2.close();
@@ -614,7 +617,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias3_1 >> temp_next;
 			f_bias3_2 >> temp_prev;
-			(*((FCLayer *)net->layers[6])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[6])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias3_1.close();
 		f_bias3_2.close();
@@ -633,7 +636,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias4_1 >> temp_next;
 			f_bias4_2 >> temp_prev;
-			(*((FCLayer *)net->layers[8])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[8])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias4_1.close();
 		f_bias4_2.close();
@@ -655,7 +658,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_input_1 >> temp_next;
 			f_input_2 >> temp_prev;
-			net->inputData[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			net->inputData[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_input_1.close();
 		f_input_2.close();
@@ -677,7 +680,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 			f_weight1_1 >> temp_next;
 			f_weight1_2 >> temp_prev;
 			(*((CNNLayer *)net->layers[0])->getWeights())[row] =
-				std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+				make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_weight1_1.close();
 		f_weight1_2.close();
@@ -697,7 +700,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 			f_weight2_1 >> temp_next;
 			f_weight2_2 >> temp_prev;
 			(*((CNNLayer *)net->layers[3])->getWeights())[row] =
-				std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+				make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_weight2_1.close();
 		f_weight2_2.close();
@@ -719,7 +722,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight3_1 >> temp_next;
 				f_weight3_2 >> temp_prev;
 				(*((FCLayer *)net->layers[6])->getWeights())[500 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight3_1.close();
@@ -742,7 +745,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 				f_weight4_1 >> temp_next;
 				f_weight4_2 >> temp_prev;
 				(*((FCLayer *)net->layers[8])->getWeights())[10 * row + column] =
-					std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+					make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 			}
 		}
 		f_weight4_1.close();
@@ -762,7 +765,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias1_1 >> temp_next;
 			f_bias1_2 >> temp_prev;
-			(*((CNNLayer *)net->layers[0])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((CNNLayer *)net->layers[0])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias1_1.close();
 		f_bias1_2.close();
@@ -781,7 +784,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias2_1 >> temp_next;
 			f_bias2_2 >> temp_prev;
-			(*((CNNLayer *)net->layers[3])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((CNNLayer *)net->layers[3])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias2_1.close();
 		f_bias2_2.close();
@@ -800,7 +803,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias3_1 >> temp_next;
 			f_bias3_2 >> temp_prev;
-			(*((FCLayer *)net->layers[6])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[6])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias3_1.close();
 		f_bias3_2.close();
@@ -819,7 +822,7 @@ void preload_network(bool PRELOADING, string network, NeuralNetwork *net)
 		{
 			f_bias4_1 >> temp_next;
 			f_bias4_2 >> temp_prev;
-			(*((FCLayer *)net->layers[8])->getBias())[i] = std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
+			(*((FCLayer *)net->layers[8])->getBias())[i] = make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev)));
 		}
 		f_bias4_1.close();
 		f_bias4_2.close();
@@ -921,7 +924,7 @@ void loadData(string net, string dataset)
 	{
 		f_next >> temp_next;
 		f_prev >> temp_prev;
-		trainData.push_back(std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
+		trainData.push_back(make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
 	}
 	f_next.close();
 	f_prev.close();
@@ -932,7 +935,7 @@ void loadData(string net, string dataset)
 	{
 		g_next >> temp_next;
 		g_prev >> temp_prev;
-		trainLabels.push_back(std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
+		trainLabels.push_back(make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
 	}
 	g_next.close();
 	g_prev.close();
@@ -943,7 +946,7 @@ void loadData(string net, string dataset)
 	{
 		h_next >> temp_next;
 		h_prev >> temp_prev;
-		testData.push_back(std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
+		testData.push_back(make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
 	}
 	h_next.close();
 	h_prev.close();
@@ -954,7 +957,7 @@ void loadData(string net, string dataset)
 	{
 		k_next >> temp_next;
 		k_prev >> temp_prev;
-		testLabels.push_back(std::make_pair(0, std::make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
+		testLabels.push_back(make_pair(0, make_pair(floatToMyType(temp_next), floatToMyType(temp_prev))));
 	}
 	k_next.close();
 	k_prev.close();
@@ -1391,7 +1394,7 @@ void runOnly(NeuralNetwork *net, size_t l, string what, string &network)
 {
 	size_t total_layers = net->layers.size();
 	assert((l >= 0 and l < total_layers) && "Incorrect layer number for runOnly");
-	network = network + " L" + std::to_string(l) + " " + what;
+	network = network + " L" + to_string(l) + " " + what;
 
 	if (what.compare("F") == 0)
 	{
@@ -1569,26 +1572,117 @@ void deleteObjects()
 }
 
 /***************** Client Communication and Helpers ******************/
-MEVectorType convertInput(vector<vector<float>> input) {
+MEVectorType convertInput(vector<vector<float>> input)
+{
 	MEVectorType inputData(INPUT_SIZE);
-	for (size_t i = 0; i < input[0].size(); ++i) {
+	for (size_t i = 0; i < input[0].size(); ++i)
+	{
 		inputData[i] = make_pair(0, make_pair(floatToMyType(input[0][i]), floatToMyType(input[1][i])));
 	}
 	return inputData;
 }
 
+void syncBatch(vector<ClientRequest> &batch)
+{
+	size_t size = batch.size();
+	vector<int> a_next(MINI_BATCH_SIZE), a_prev(MINI_BATCH_SIZE), a(MINI_BATCH_SIZE);
 
-MEVectorType inputBatch(vector<ClientRequest> batch) {
+	for (int i = 0; i < MINI_BATCH_SIZE; ++i)
+	{
+		if (i < size)
+		{
+			a[i] = batch[i].request_id;
+		}
+		else
+		{
+			a[i] = -1;
+		}
+		a_next[i] = 0;
+		a_prev[i] = 0;
+	}
+
+	// for (int i = 0; i < a.size(); i++)
+	// {
+	// 	cout << a[i] << " ";
+	// }
+	// cout << endl;
+	thread *threads = new thread[4];
+
+	threads[0] = thread(sendVector<int>, ref(a), nextParty(partyNum), MINI_BATCH_SIZE);
+	threads[1] = thread(sendVector<int>, ref(a), prevParty(partyNum), MINI_BATCH_SIZE);
+	threads[2] = thread(receiveVector<int>, ref(a_prev), prevParty(partyNum), MINI_BATCH_SIZE);
+	threads[3] = thread(receiveVector<int>, ref(a_next), nextParty(partyNum), MINI_BATCH_SIZE);
+
+	// cout << "[P" << partyNum << "] Syncing batch..." << endl;
+	for (int i = 0; i < 4; i++)
+		threads[i].join();
+
+	delete[] threads;
+
+	// cout << "[P" << partyNum << "] Syncing done!" << endl;
+
+	set<int> a_next_set(a_next.begin(), a_next.end());
+	set<int> a_prev_set(a_prev.begin(), a_prev.end());
+	set<int> a_set(a.begin(), a.end());
+
+	set<int> overlapping;
+
+	set_intersection(a_next_set.begin(), a_next_set.end(),
+					 a_prev_set.begin(), a_prev_set.end(),
+					 inserter(overlapping, overlapping.begin()));
+
+	set<int> temp;
+	set_intersection(overlapping.begin(), overlapping.end(),
+					 a_set.begin(), a_set.end(),
+					 inserter(temp, temp.begin()));
+	overlapping = temp;
+	std::vector<int> overlapping_vec(overlapping.begin(), overlapping.end());
+	// for (int i = 0; i < overlapping_vec.size(); i++)
+	// {
+	// 	cout << overlapping_vec[i] << endl;
+	// }
+
+	sort(batch.begin(), batch.end(), [](const ClientRequest &a, const ClientRequest &b)
+		 { return a.request_id < b.request_id; });
+
+	vector<ClientRequest> filtered_batch;
+	vector<ClientRequest> to_requeue;
+
+	for (const auto &req : batch)
+	{
+		if (overlapping.count(req.request_id))
+		{
+			filtered_batch.push_back(req);
+		}
+		else
+		{
+			to_requeue.push_back(req);
+		}
+	}
+
+	batch = move(filtered_batch);
+
+	requestQueue.requeueFront(to_requeue);
+}
+
+MEVectorType inputBatch(vector<ClientRequest> batch)
+{
 	MEVectorType inputData(MINI_BATCH_SIZE * INPUT_SIZE);
 	size_t batchSize = batch.size();
 
-	for (size_t i = 0; i < MINI_BATCH_SIZE; ++i) {
-		if (i >= batchSize) {
-			for (size_t j = 0; j < INPUT_SIZE; ++j) {
+	for (size_t i = 0; i < MINI_BATCH_SIZE; ++i)
+	{
+		if (i >= batchSize)
+		{
+			for (size_t j = 0; j < INPUT_SIZE; ++j)
+			{
 				inputData[i * INPUT_SIZE + j] = make_pair(0, make_pair(0, 0));
 			}
-		} else {
-			for (size_t j = 0; j < INPUT_SIZE; ++j) {
+		}
+		else
+		{
+			for (size_t j = 0; j < INPUT_SIZE; ++j)
+			{
 				inputData[i * INPUT_SIZE + j] = batch[i].input_data[j];
 			}
 		}
@@ -1597,93 +1691,110 @@ MEVectorType inputBatch(vector<ClientRequest> batch) {
 	return inputData;
 }
 
-void returnOutput(vector<ClientRequest> batch, NeuralNetwork *net) {
+void returnOutput(vector<ClientRequest> batch, NeuralNetwork *net)
+{
 	int i = 0;
 	MEVectorType totalOutput = *net->layers[NUM_LAYERS - 1]->getActivation();
 
-	for (const auto& request : batch) {
-        json response;
-        response["client_id"] = request.client_id;
-        response["request_id"] = request.request_id;
+	for (const auto &request : batch)
+	{
+		json response;
+		response["client_id"] = request.client_id;
+		response["request_id"] = request.request_id;
 
 		MEVectorType clientOutput(LAST_LAYER_SIZE);
 
-		for (int j = 0; j < LAST_LAYER_SIZE; ++j) {
+		for (int j = 0; j < LAST_LAYER_SIZE; ++j)
+		{
 			clientOutput[j] = totalOutput[i * LAST_LAYER_SIZE + j];
 		}
-        response["output"] = clientOutput;
+		response["output"] = clientOutput;
 
-        std::string message = response.dump();
-        ssize_t sent = send(request.socket_fd, message.c_str(), message.size(), 0);
-        if (sent < 0) {
-            std::cerr << "Failed to send response to client " << request.client_id << std::endl;
-        } else {
-            std::cout << "Sent response to " << request.client_id << " (ID " << request.request_id << ")\n";
-        }
+		string message = response.dump();
+		ssize_t sent = send(request.socket_fd, message.c_str(), message.size(), 0);
+		if (sent < 0)
+		{
+			cerr << "Failed to send response to client " << request.client_id << endl;
+		}
+		else
+		{
+			// cout << "Sent response to " << request.client_id << " (ID " << request.request_id << ")\n";
+		}
 
-        close(request.socket_fd);
+		close(request.socket_fd);
 		i++;
-    }
+	}
 }
 
+void listenForRequests(int port)
+{
+	int serverFd, newSocket;
+	struct sockaddr_in address;
+	int addrlen = sizeof(address);
 
-void listenForRequests(int port) {
-    int serverFd, newSocket;
-    struct sockaddr_in address;
-    int addrlen = sizeof(address);
+	if ((serverFd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+	{
+		perror("socket failed");
+		exit(EXIT_FAILURE);
+	}
 
-    if ((serverFd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }
+	int opt = 1;
+	setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    int opt = 1;
-    setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons(port);
 
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
+	if (bind(serverFd, (struct sockaddr *)&address, sizeof(address)) < 0)
+	{
+		perror("bind failed");
+		exit(EXIT_FAILURE);
+	}
 
-    if (bind(serverFd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
+	if (listen(serverFd, 10) < 0)
+	{
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
 
-    if (listen(serverFd, 10) < 0) {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
+	cout << "[P" << partyNum << "] Listening on port " << port << endl;
 
-    cout << "[P" << partyNum << "] Listening on port " << port << endl;
+	while (true)
+	{
+		newSocket = accept(serverFd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+		if (newSocket < 0)
+		{
+			perror("accept failed");
+			continue;
+		}
 
-    while (true) {
-        newSocket = accept(serverFd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-        if (newSocket < 0) {
-            perror("accept failed");
-            continue;
-        }
+		// Handle the connection in a new thread
+		thread([newSocket]()
+			   {
+				   char buffer[16384] = {0};
+				   int valread = read(newSocket, buffer, sizeof(buffer) - 1);
+				   if (valread > 0)
+				   {
+					   try
+					   {
+						   json j = json::parse(buffer);
+						   string clientId = j["client_id"];
+						   int requestId = j["request_id"];
+						   MEVectorType inputData = convertInput(j["inputs"]);
 
-        // Handle the connection in a new thread
-        std::thread([newSocket]() {
-            char buffer[16384] = {0};
-            int valread = read(newSocket, buffer, sizeof(buffer) - 1);
-            if (valread > 0) {
-                try {
-                    json j = json::parse(buffer);
-                    string clientId = j["client_id"];
-                    int requestId = j["request_id"];
-                    MEVectorType inputData = convertInput(j["inputs"]);
-
-                    requestQueue.addRequest(clientId, requestId, inputData, newSocket);
-                    cout << "✅ Received request from " << clientId << ", ID: " << requestId << endl;
-                } catch (const exception& e) {
-                    cerr << "❌ Failed to parse request: " << e.what() << endl;
-					close(newSocket);
-                }
-            }
-            // close(newSocket);
-        }).detach();
-    }
+						   requestQueue.addRequest(clientId, requestId, inputData, newSocket);
+						   //    cout << "✅ Received request from " << clientId << ", ID: " << requestId << endl;
+					   }
+					   catch (const exception &e)
+					   {
+						   cerr << "❌ Failed to parse request: " << e.what() << endl;
+						   close(newSocket);
+					   }
+				   }
+				   // close(newSocket);
+			   })
+			.detach();
+	}
 }
 
 /************************ AlexNet on ImageNet ************************/

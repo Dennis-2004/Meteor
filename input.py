@@ -1,4 +1,4 @@
-from tensorflow.keras.datasets import mnist
+# from tensorflow.keras.datasets import mnist
 import math
 import socket
 import json
@@ -32,14 +32,14 @@ def send_share_only(client_id, request_id, inputs, port, host="127.0.0.1"):
 
     sock = socket.create_connection((host, port))
     sock.sendall(message)
-    print(f"Sent request to port {port}")
+    # print(f"Sent request to port {port}")
     return sock
 
 
 def receive_response(sock, port):
     response_data = sock.recv(16384)
     if response_data:
-        print(f"Received response from port {port}")
+        # print(f"Received response from port {port}")
         response = json.loads(response_data.decode("utf-8"))["output"]
     else:
         response = None
@@ -50,8 +50,9 @@ def receive_response(sock, port):
 if __name__ == "__main__":
     id = int(sys.argv[1])
 
-    (train_images, train_labels), (_, _) = mnist.load_data()
-    image = (train_images[id] / 255.0).flatten()
+    # (train_images, train_labels), (_, _) = mnist.load_data()
+    # image = (train_images[id] / 255.0).flatten()
+    image = [float(x) for x in open("Meteor/files/preload/SecureML/input_0").readlines()[id].split()]
 
     shares = [[], [], []]
     for pixel in image:
@@ -74,4 +75,4 @@ if __name__ == "__main__":
         output.append(mytype_signed_to_float(out1[x][0] + (out1[x][1][0] + out1[x][1][1] + out2[x][1][1])))
 
     print("Output:", output)
-    print("Image ID:", id, " Label:", train_labels[id])
+    # print("Image ID:", id, " Label:", train_labels[id])
